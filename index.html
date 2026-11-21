@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KisanVani - AI farming assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;800&family=Noto+Sans+Telugu:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">
+      <span class="logo-mark">K</span>
+      <div><b>KisanVani</b><small lang="te">కిసాన్ వాణి</small></div>
+    </div>
+    <nav id="nav" aria-label="Main">
+      <button data-view="dashboard" data-icon="home"></button>
+      <button data-view="ask" data-icon="chat"></button>
+      <button data-view="diagnose" data-icon="leaf"></button>
+      <button data-view="fert" data-icon="calc"></button>
+      <button data-view="cal" data-icon="calendar"></button>
+      <button data-view="ledger" data-icon="wallet"></button>
+      <button data-view="schemes" data-icon="book"></button>
+      <button data-view="history" data-icon="clock"></button>
+    </nav>
+    <div class="side-foot">Powered by Gemini AI<br>Weather by Open-Meteo</div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <h1 id="viewTitle"></h1>
+      <div class="controls">
+        <select id="langSel" aria-label="Language">
+          <option value="te">తెలుగు</option>
+          <option value="hi">हिन्दी</option>
+          <option value="en">English</option>
+          <option value="auto">Auto (any language)</option>
+        </select>
+        <select id="cropSel" aria-label="Crop"></select>
+        <select id="districtSel" aria-label="District"></select>
+        <button class="icon-btn" id="fontDown" aria-label="Smaller text">A-</button>
+        <button class="icon-btn" id="fontUp" aria-label="Larger text">A+</button>
+        <button class="icon-btn" id="themeBtn" aria-label="Toggle dark mode"></button>
+      </div>
+    </header>
+
+    <div id="views">
+      <!-- DASHBOARD -->
+      <section id="view-dashboard" class="view">
+        <div class="hero card">
+          <div>
+            <p class="eyebrow" id="heroGreet"></p>
+            <h2 id="heroTitle"></h2>
+            <p class="muted" id="heroSub"></p>
+          </div>
+          <div class="hero-actions">
+            <button class="btn primary" data-go="ask"></button>
+            <button class="btn" data-go="diagnose"></button>
+          </div>
+        </div>
+
+        <div class="grid two">
+          <div class="card" id="dashWeather"><div class="skeleton">Loading weather...</div></div>
+          <div class="card">
+            <h3>Farm advisory</h3>
+            <div id="dashAlerts" class="alerts"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>5-day forecast</h3>
+          <div id="dashForecast" class="forecast"></div>
+        </div>
+
+        <div class="grid stats" id="statCards"></div>
+
+        <div class="grid two">
+          <div class="card">
+            <h3>Questions in the last 7 days</h3>
+            <div id="barChart" class="bars"></div>
+          </div>
+          <div class="card">
+            <h3>Most asked crops</h3>
+            <div id="cropList" class="croplist"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ASK -->
+      <section id="view-ask" class="view hidden">
+        <div class="card chat-card">
+          <div class="chat-head">
+            <div>
+              <h3 id="askTitle"></h3>
+              <p class="muted small" id="askSub"></p>
+            </div>
+            <div class="chat-tools"><select id="voiceMode" aria-label="Voice mode"><option value="smart">Smart voice (AI listens)</option><option value="browser">Browser voice</option></select>
+            <label class="switch"><input type="checkbox" id="speakToggle"><span></span><em>Read aloud</em></label></div>
+          </div>
+          <div id="chat" class="chat" aria-live="polite"></div>
+          <div id="chips" class="chips"></div>
+          <div class="status" id="status" role="status"></div>
+          <div class="composer">
+            <button id="micBtn" class="mic" aria-label="Speak your question"></button>
+            <input id="textInput" type="text" maxlength="500" autocomplete="off">
+            <button id="sendBtn" class="btn primary"></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- DIAGNOSE -->
+      <section id="view-diagnose" class="view hidden">
+        <div class="grid two">
+          <div class="card">
+            <h3>Crop doctor</h3>
+            <p class="muted small">Take a clear photo of the affected leaf or plant. Good light and one leaf in focus give the best result.</p>
+            <label class="drop" id="drop" for="fileInput">
+              <img id="preview" class="hidden" alt="Selected crop photo">
+              <div id="dropHint">
+                <span class="drop-icon" data-icon="camera"></span>
+                <b>Click to upload or drag a photo here</b>
+                <small>JPG, PNG or WEBP</small>
+              </div>
+            </label>
+            <input type="file" id="fileInput" accept="image/*" hidden>
+            <button class="btn primary wide" id="analyzeBtn" disabled>Analyze photo</button>
+            <div class="status" id="diagStatus"></div>
+          </div>
+          <div class="card" id="diagResult">
+            <h3>Result</h3>
+            <p class="muted">Your diagnosis will appear here, in the language you selected at the top.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- FERTILIZER -->
+      <section id="view-fert" class="view hidden">
+        <div class="grid two">
+          <div class="card">
+            <h3>Fertilizer calculator</h3>
+            <p class="muted small">Estimates Urea, DAP and MOP for your land using general nutrient guidelines.</p>
+            <label for="fertCrop">Crop</label>
+            <select id="fertCrop"></select>
+            <label for="fertAcres">Land size (acres)</label>
+            <input type="number" id="fertAcres" min="0.1" max="1000" step="0.1" value="1">
+            <button class="btn primary wide" id="fertBtn">Calculate</button>
+          </div>
+          <div class="card" id="fertResult">
+            <h3>Recommendation</h3>
+            <p class="muted">Choose a crop and land size, then press Calculate.</p>
+          </div>
+        </div>
+      </section>
+
+            <!-- CROP CALENDAR -->
+      <section id="view-cal" class="view hidden">
+        <div class="card">
+          <h3>This month on the farm</h3>
+          <div id="calNow" class="alerts"></div>
+        </div>
+        <div class="card">
+          <h3>Typical Andhra Pradesh crop calendar</h3>
+          <div class="legend"><span class="c-S"></span>Sowing <span class="c-G"></span>Growing <span class="c-H"></span>Harvest</div>
+          <div class="cal-scroll"><div id="calGrid" class="cal"></div></div>
+          <p class="muted small" id="calNote"></p>
+        </div>
+      </section>
+
+      <!-- FARM LEDGER -->
+      <section id="view-ledger" class="view hidden">
+        <div class="grid three" id="lgCards"></div>
+        <div class="grid two">
+          <div class="card">
+            <h3>Add an entry</h3>
+            <label for="lgDate">Date</label>
+            <input type="date" id="lgDate">
+            <label for="lgKind">Type</label>
+            <select id="lgKind"><option value="expense">Expense</option><option value="income">Income</option></select>
+            <label for="lgCat">Category</label>
+            <select id="lgCat"></select>
+            <label for="lgCrop">Crop</label>
+            <select id="lgCrop"></select>
+            <label for="lgAmt">Amount (₹)</label>
+            <input type="number" id="lgAmt" min="1" step="1" placeholder="e.g. 2500">
+            <label for="lgNote">Note (optional)</label>
+            <input type="text" id="lgNote" maxlength="200" placeholder="e.g. 2 bags of DAP">
+            <button class="btn primary wide" id="lgAdd">Save entry</button>
+          </div>
+          <div class="card">
+            <h3>Where the money goes</h3>
+            <div id="lgBreak" class="croplist"></div>
+            <h3 style="margin-top:18px">Profit by crop</h3>
+            <div id="lgCrops" class="croplist"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>All entries</h3>
+          <div id="lgList" class="history-list"></div>
+        </div>
+      </section>
+
+      <!-- SCHEMES AND HELP -->
+      <section id="view-schemes" class="view hidden">
+        <div class="card helpline">
+          <div>
+            <h3>Need to talk to a person?</h3>
+            <p class="muted">Kisan Call Centre gives free farming advice in local languages. You can also visit your nearest Rythu Bharosa Kendra (RBK).</p>
+          </div>
+          <a class="btn primary" href="tel:18001801551">Call 1800-180-1551 (toll-free)</a>
+        </div>
+        <div id="schemeGrid" class="grid three"></div>
+      </section>
+
+      <!-- HISTORY -->
+      <section id="view-history" class="view hidden">
+        <div class="card">
+          <div class="history-head">
+            <input type="search" id="histSearch" placeholder="Search past questions">
+            <a class="btn" href="/api/export.csv" download>Export CSV</a>
+            <button class="btn danger" id="clearBtn">Delete all</button>
+          </div>
+          <div id="historyList" class="history-list"></div>
+        </div>
+      </section>
+    </div>
+
+    <footer class="foot">
+      AI answers can be wrong. Confirm pesticide doses and scheme details with your local Rythu Bharosa Kendra (RBK) or agriculture officer.
+    </footer>
+  </div>
+</div>
+<div id="toast" class="toast hidden" role="status"></div>
+<script src="app.js"></script>
+</body>
+</html>
